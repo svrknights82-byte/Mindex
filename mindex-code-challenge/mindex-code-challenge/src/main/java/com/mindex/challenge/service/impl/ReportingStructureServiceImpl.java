@@ -1,4 +1,3 @@
-// src/main/java/com/mindex/challenge/service/impl/ReportingStructureServiceImpl.java
 package com.mindex.challenge.service.impl;
 
 import com.mindex.challenge.data.Employee;
