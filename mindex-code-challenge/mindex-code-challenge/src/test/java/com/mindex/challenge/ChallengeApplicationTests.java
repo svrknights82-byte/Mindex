@@ -18,6 +18,15 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.when;
 
+import com.mindex.challenge.data.Compensation;
+import com.mindex.challenge.dao.CompensationRepository;
+import com.mindex.challenge.service.CompensationService;
+
+import java.time.LocalDate;
+
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.times;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ChallengeApplicationTests {
@@ -25,9 +34,13 @@ public class ChallengeApplicationTests {
 
 	@Autowired
 	private ReportingStructureService reportingStructureService;
+	@Autowired
+	private CompensationService compensationService;
 
 	@MockBean
 	private EmployeeService employeeService;
+	@MockBean
+	private CompensationRepository compensationRepository;
 
 	// Mock Objects
 
@@ -44,7 +57,7 @@ public class ChallengeApplicationTests {
 	/*
 	This will create the full mock employee
 	 */
-	private static Employee id_with_reports(String id, List<String> directReportIds) {
+	private static Employee idWithReports(String id, List<String> directReportIds) {
 		Employee mockEmployee = new Employee();
 		mockEmployee.setEmployeeId(id);
 		if (directReportIds == null) {
@@ -59,9 +72,9 @@ public class ChallengeApplicationTests {
 
 
 	@Test
-	public void noReports_returnsZero() {
+	public void noReportsReturnsZero() {
 		// graph: {A}
-		Employee a = id_with_reports("A", null);
+		Employee a = idWithReports("A", null);
 		when(employeeService.read("A")).thenReturn(a);
 
 		ReportingStructure rs = reportingStructureService.read("A");
@@ -71,9 +84,9 @@ public class ChallengeApplicationTests {
 	@Test
 	public void onlyDirectReports() {
 		// Graph A -> {B, C}
-		Employee a = id_with_reports("A", Arrays.asList("B", "C"));
-		Employee b = id_with_reports("B", null);
-		Employee c = id_with_reports("C", null);
+		Employee a = idWithReports("A", Arrays.asList("B", "C"));
+		Employee b = idWithReports("B", null);
+		Employee c = idWithReports("C", null);
 
 		when(employeeService.read("A")).thenReturn(a);
 		when(employeeService.read("B")).thenReturn(b);
@@ -86,10 +99,10 @@ public class ChallengeApplicationTests {
 	@Test
 	public void directAndIndirect() {
 		// Graph A -> {B -> {C, D}}
-		Employee a = id_with_reports("A", Collections.singletonList("B"));
-		Employee b = id_with_reports("B", Arrays.asList("C", "D"));
-		Employee c = id_with_reports("C", null);
-		Employee d = id_with_reports("D", null);
+		Employee a = idWithReports("A", Collections.singletonList("B"));
+		Employee b = idWithReports("B", Arrays.asList("C", "D"));
+		Employee c = idWithReports("C", null);
+		Employee d = idWithReports("D", null);
 
 		when(employeeService.read("A")).thenReturn(a);
 		when(employeeService.read("B")).thenReturn(b);
@@ -101,11 +114,11 @@ public class ChallengeApplicationTests {
 	}
 
 	@Test
-	public void reportingStructure_cycle() {
+	public void reportingStructureCycle() {
 		// graph A -> {B}
 		// 		 B -> {A}
-		Employee a = id_with_reports("A", Collections.singletonList("B"));
-		Employee b = id_with_reports("B", Collections.singletonList("A"));
+		Employee a = idWithReports("A", Collections.singletonList("B"));
+		Employee b = idWithReports("B", Collections.singletonList("A"));
 
 		when(employeeService.read("A")).thenReturn(a);
 		when(employeeService.read("B")).thenReturn(b);
@@ -114,7 +127,77 @@ public class ChallengeApplicationTests {
 		assertEquals(1, rs.getNumOfReports());
 	}
 	@Test
-	public void contextLoads() {
+	public void createNewCompRecord() {
+		// build new compensation
+		String employeeId = "E1";
+		Compensation comp = new Compensation();
+		comp.setEmployeeId(employeeId);
+		comp.setSalary(120000.0);
+		comp.setEffectiveDate(LocalDate.of(2025, 8, 1));
+
+		// Check to make sure employee exists
+		when(employeeService.read(employeeId)).thenReturn(new Employee());
+
+		// There should be no comp on this employee right now
+		when(compensationRepository.findByEmployeeId(employeeId)).thenReturn(null);
+		when(compensationRepository.save(comp)).thenReturn(comp);
+		Compensation saved = compensationService.create(comp);
+
+		// Need to verify all the information is stored accurately
+		assertEquals(employeeId, saved.getEmployeeId());
+		assertEquals(120000.0, saved.getSalary());
+		assertEquals(LocalDate.of(2025, 8, 1), saved.getEffectiveDate());
 	}
 
+	@Test
+	public void replaceExistingComp() {
+		// build new compensation
+		String employeeId = "E2";
+		Compensation existing = new Compensation();
+		existing.setEmployeeId(employeeId);
+		existing.setSalary(90000.0);
+		existing.setEffectiveDate(LocalDate.of(2024, 1, 1));
+		
+		// replace the existing compensation
+		Compensation comp = new Compensation();
+		comp.setEmployeeId(employeeId);
+		comp.setSalary(120000.0);
+		comp.setEffectiveDate(LocalDate.of(2025, 8, 1));
+
+		when(employeeService.read(employeeId)).thenReturn(new Employee());
+		when(compensationRepository.findByEmployeeId(employeeId)).thenReturn(existing);
+		when(compensationRepository.save(comp)).thenReturn(comp);
+		
+		Compensation saved = compensationService.create(comp);
+
+		assertEquals(employeeId, saved.getEmployeeId());
+		assertEquals(120000.0, saved.getSalary());
+		assertEquals(LocalDate.of(2025, 8, 1), saved.getEffectiveDate());
+	}
+
+	// Test errors
+	@Test(expected = RuntimeException.class)
+	public void missingEmployeeId() {
+		Compensation comp = new Compensation();
+		comp.setSalary(100000.0);
+		comp.setEffectiveDate(LocalDate.now());
+		compensationService.create(comp);
+	}
+
+	@Test(expected = RuntimeException.class)
+	public void missingEffectiveDate() {
+		Compensation comp = new Compensation();
+		comp.setEmployeeId("E3");
+		comp.setSalary(100000.0);
+		compensationService.create(comp);
+	}
+
+	@Test(expected = RuntimeException.class)
+	public void negativeSalary() {
+		Compensation comp = new Compensation();
+		comp.setEmployeeId("E4");
+		comp.setSalary(-1.0);
+		comp.setEffectiveDate(LocalDate.now());
+		compensationService.create(comp);
+	}
 }
