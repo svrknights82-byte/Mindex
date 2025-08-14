@@ -8,6 +8,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+/**
+ * This class will have create() to create a new compensation for an employee depending on
+ * the users input and replace existing compensation for that employee.  It will also have
+ * read() to read the current compensation for the employee
+ */
 @Service
 public class CompensationServiceImpl implements CompensationService {
 
@@ -50,7 +55,7 @@ public class CompensationServiceImpl implements CompensationService {
     }
 
     @Override
-    public Compensation readCurrent(String employeeId) {
+    public Compensation read(String employeeId) {
         // just want to make sure input is valid before searching for compensation
         if (employeeId == null || employeeId.isBlank()) {
             throw new RuntimeException("you must give an employeeId");

@@ -11,6 +11,10 @@ import org.springframework.stereotype.Service;
 import java.util.HashSet;
 import java.util.Set;
 
+/**
+ * This implements the read method to return the compensation using the helper function
+ * calcAllReports to use recursion to find all the reports
+ */
 @Service
 public class ReportingStructureServiceImpl implements ReportingStructureService {
 

@@ -2,6 +2,10 @@ package com.mindex.challenge.data;
 
 import java.time.LocalDate;
 
+/**
+ * This is the backbone of the compensation design.  This will relate the employee id to
+ * a salary and effective date.
+ */
 public class Compensation {
     private String employeeId; // This is how we will link this to an employee
     private double salary;
