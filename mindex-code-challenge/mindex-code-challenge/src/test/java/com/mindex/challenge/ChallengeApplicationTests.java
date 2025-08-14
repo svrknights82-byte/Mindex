@@ -24,9 +24,6 @@ import com.mindex.challenge.service.CompensationService;
 
 import java.time.LocalDate;
 
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.times;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class ChallengeApplicationTests {
@@ -37,12 +34,11 @@ public class ChallengeApplicationTests {
 	@Autowired
 	private CompensationService compensationService;
 
+	// Mock Objects
 	@MockBean
 	private EmployeeService employeeService;
 	@MockBean
 	private CompensationRepository compensationRepository;
-
-	// Mock Objects
 
 	/*
 	To simulate a real run, the employee object only will have the id when called using
