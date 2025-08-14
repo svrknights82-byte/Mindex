@@ -23,6 +23,7 @@ public class CompensationServiceImpl implements CompensationService {
     }
 
     @Override
+    // Want to verify that the input is valid to build my compensation
     public Compensation create(Compensation comp) {
         if (comp == null) {
             throw new RuntimeException("You need to build a compensation body first");
@@ -50,6 +51,7 @@ public class CompensationServiceImpl implements CompensationService {
 
     @Override
     public Compensation readCurrent(String employeeId) {
+        // just want to make sure input is valid before searching for compensation
         if (employeeId == null || employeeId.isBlank()) {
             throw new RuntimeException("you must give an employeeId");
         }
