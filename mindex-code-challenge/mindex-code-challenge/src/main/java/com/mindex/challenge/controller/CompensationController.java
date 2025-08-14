@@ -26,7 +26,7 @@ public class CompensationController {
     // Read the single active compensation for an employee
     @GetMapping("/{employeeId}")
     public ResponseEntity<Compensation> read(@PathVariable String employeeId) {
-        Compensation current = compensationService.readCurrent(employeeId);
+        Compensation current = compensationService.read(employeeId);
         return new ResponseEntity<>(current, HttpStatus.OK);
     }
 }
